@@ -1,86 +1,88 @@
-/**
- * @file App.tsx
- * @description Root Application Entry Point and Route Orchestrator.
- * @architecture Strictly bound React Router mapping to domain views.
- */
-
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/Layout";
-import StudentManagement from "./pages/MasterData/StudentManagement";
-
-// Placeholder components for routing architecture completeness
-// These will be replaced by actual implementations in subsequent phases
-const PlaceholderView = ({ title }: { title: string }) => (
-  <div style={{ padding: "24px", textAlign: "center", color: "#64748b" }}>
-    <h2>{title}</h2>
-    <p>هذه الشاشة قيد التطوير...</p>
-  </div>
-);
+import { useState } from "react";
+import { DashboardLayout } from "./layouts/DashboardLayout";
+import { GradesScreen } from "./features/grades/GradesScreen";
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("grades");
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "grades":
+        return <GradesScreen />;
+      case "teachers":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Teachers Management
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module is part of Sprint 1 and will be built next.
+            </p>
+          </div>
+        );
+      case "students":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Students Directory
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module will be built in Sprint 2.
+            </p>
+          </div>
+        );
+      case "sessions":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Session Attendance
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module will be built in Sprint 2.
+            </p>
+          </div>
+        );
+      case "invoices":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Invoices & Payments
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module will be built in Sprint 3.
+            </p>
+          </div>
+        );
+      case "teacher-payments":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Teacher Payroll & Dues
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module will be built in Sprint 3.
+            </p>
+          </div>
+        );
+      case "reports":
+        return (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800">
+              Financial Reports
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">
+              This module will be built in Sprint 4.
+            </p>
+          </div>
+        );
+      default:
+        return <GradesScreen />;
+    }
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* التوجيه الجذري يعتمد Layout كحاضنة لجميع الشاشات الداخلية */}
-        <Route path="/" element={<Layout />}>
-          {/* إعادة التوجيه التلقائي من الجذر إلى شاشة الطلاب كشاشة افتراضية */}
-          <Route index element={<Navigate to="/students" replace />} />
-
-          {/* الشاشات النشطة والمستقبلية */}
-          <Route path="students" element={<StudentManagement />} />
-          <Route
-            path="teachers"
-            element={<PlaceholderView title="إدارة المعلمين" />}
-          />
-          <Route
-            path="grades"
-            element={<PlaceholderView title="المراحل الدراسية" />}
-          />
-          <Route
-            path="sessions"
-            element={<PlaceholderView title="إدارة الحصص" />}
-          />
-          <Route
-            path="billing"
-            element={<PlaceholderView title="المالية والفواتير" />}
-          />
-        </Route>
-
-        {/* معالجة الروابط غير الموجودة (404 Fallback) */}
-        <Route
-          path="*"
-          element={
-            <div
-              style={{
-                display: "flex",
-                height: "100vh",
-                alignItems: "center",
-                justifyContent: "center",
-                direction: "rtl",
-              }}
-            >
-              <div style={{ textAlign: "center" }}>
-                <h1 style={{ fontSize: "48px", color: "#ef4444", margin: 0 }}>
-                  404
-                </h1>
-                <p style={{ fontSize: "18px", color: "#475569" }}>
-                  الصفحة المطلوبة غير موجودة.
-                </p>
-                <a
-                  href="/"
-                  style={{
-                    color: "#2563eb",
-                    textDecoration: "none",
-                    fontWeight: 600,
-                  }}
-                >
-                  العودة للرئيسية
-                </a>
-              </div>
-            </div>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
+      {renderContent()}
+    </DashboardLayout>
   );
 }
