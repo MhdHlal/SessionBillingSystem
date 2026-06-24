@@ -22,6 +22,8 @@ export const StudentsScreen: React.FC = () => {
   );
   const [submitting, setSubmitting] = useState<boolean>(false);
 
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
   useEffect(() => {
     let isMounted = true;
 
@@ -141,9 +143,13 @@ export const StudentsScreen: React.FC = () => {
     }
   };
 
+  const filteredStudents = students.filter((student) =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Students Management
@@ -152,13 +158,27 @@ export const StudentsScreen: React.FC = () => {
             Configure and manage the students and their grade assignments
           </p>
         </div>
-        <Button
-          onClick={handleOpenCreate}
-          variant="primary"
-          disabled={grades.length === 0}
-        >
-          Add Student
-        </Button>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="w-full sm:w-64">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
+              placeholder="Search students..."
+            />
+          </div>
+          <Button
+            onClick={handleOpenCreate}
+            variant="primary"
+            disabled={grades.length === 0}
+            className="whitespace-nowrap"
+          >
+            Add Student
+          </Button>
+        </div>
       </div>
 
       {grades.length === 0 && !loading && (
@@ -184,7 +204,7 @@ export const StudentsScreen: React.FC = () => {
       ) : (
         <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
           <DataTable
-            data={students}
+            data={filteredStudents}
             columns={[
               {
                 header: "Student Name",

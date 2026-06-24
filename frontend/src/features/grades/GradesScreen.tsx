@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { Grade } from "./types";
+import type { Student } from "../students/types";
 import { gradeService } from "./gradeService";
+import { studentService } from "../students/studentService";
 import { Button } from "../../shared/components/Button";
 import { DataTable } from "../../shared/components/DataTable";
 import { Input } from "../../shared/components/FormField";
@@ -8,30 +10,36 @@ import { ConfirmationDialog } from "../../shared/components/ConfirmationDialog";
 
 export const GradesScreen: React.FC = () => {
   const [grades, setGrades] = useState<Grade[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [name, setName] = useState<string>("");
   const [editingGrade, setEditingGrade] = useState<Grade | null>(null);
   const [deletingGradeId, setDeletingGradeId] = useState<string | null>(null);
+  const [viewingGradeStudents, setViewingGradeStudents] =
+    useState<Grade | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchGrades = async () => {
+    const initData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await gradeService.getAll();
+        const [gradesData, studentsData] = await Promise.all([
+          gradeService.getAll(),
+          studentService.getAll(),
+        ]);
         if (isMounted) {
-          setGrades(data);
+          setGrades(gradesData);
+          setStudents(studentsData);
         }
       } catch (err: unknown) {
         if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to fetch grades.",
-          );
+          setError(err instanceof Error ? err.message : "Failed to load data.");
         }
       } finally {
         if (isMounted) {
@@ -40,7 +48,7 @@ export const GradesScreen: React.FC = () => {
       }
     };
 
-    fetchGrades();
+    initData();
 
     return () => {
       isMounted = false;
@@ -51,10 +59,14 @@ export const GradesScreen: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await gradeService.getAll();
-      setGrades(data);
+      const [gradesData, studentsData] = await Promise.all([
+        gradeService.getAll(),
+        studentService.getAll(),
+      ]);
+      setGrades(gradesData);
+      setStudents(studentsData);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch grades.");
+      setError(err instanceof Error ? err.message : "Failed to refresh data.");
     } finally {
       setLoading(false);
     }
@@ -122,9 +134,17 @@ export const GradesScreen: React.FC = () => {
     }
   };
 
+  const filteredGrades = grades.filter((grade) =>
+    grade.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const activeGradeStudents = viewingGradeStudents
+    ? students.filter((s) => s.gradeId === viewingGradeStudents.gradeId)
+    : [];
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Grades Management
@@ -133,9 +153,26 @@ export const GradesScreen: React.FC = () => {
             Configure and manage the academic grade levels
           </p>
         </div>
-        <Button onClick={handleOpenCreate} variant="primary">
-          Add Grade
-        </Button>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="w-full sm:w-64">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
+              placeholder="Search by grade name..."
+            />
+          </div>
+          <Button
+            onClick={handleOpenCreate}
+            variant="primary"
+            className="whitespace-nowrap"
+          >
+            Add Grade
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -154,33 +191,64 @@ export const GradesScreen: React.FC = () => {
       ) : (
         <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
           <DataTable
-            data={grades}
+            data={filteredGrades}
             columns={[
               {
                 header: "Grade Name",
-                accessor: (row) => row.name,
+                accessor: (row) => {
+                  const count = students.filter(
+                    (s) => s.gradeId === row.gradeId,
+                  ).length;
+                  return (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setViewingGradeStudents(row)}
+                        className="font-semibold text-indigo-600 hover:text-indigo-900 hover:underline text-left focus:outline-none"
+                      >
+                        {row.name}
+                      </button>
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        {count} {count === 1 ? "Student" : "Students"}
+                      </span>
+                    </div>
+                  );
+                },
                 className: "font-medium text-gray-900",
               },
               {
                 header: "Actions",
-                accessor: (row) => (
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleOpenEdit(row)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => setDeletingGradeId(row.gradeId)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                ),
+                accessor: (row) => {
+                  const hasStudents = students.some(
+                    (s) => s.gradeId === row.gradeId,
+                  );
+                  return (
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleOpenEdit(row)}
+                      >
+                        Edit
+                      </Button>
+                      <div
+                        title={
+                          hasStudents
+                            ? "Cannot delete grade with assigned students"
+                            : ""
+                        }
+                      >
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={hasStudents}
+                          onClick={() => setDeletingGradeId(row.gradeId)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                },
                 className: "text-right",
               },
             ]}
@@ -228,6 +296,56 @@ export const GradesScreen: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingGradeStudents && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assigned Students
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  List of students enrolled in {viewingGradeStudents.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingGradeStudents(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-6 max-h-96 overflow-y-auto">
+              {activeGradeStudents.length === 0 ? (
+                <div className="text-center py-6 text-gray-500 text-sm">
+                  No students are currently assigned to this grade level.
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">
+                  {activeGradeStudents.map((student) => (
+                    <li
+                      key={student.studentId}
+                      className="px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+                    >
+                      {student.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex justify-end mt-6">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setViewingGradeStudents(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

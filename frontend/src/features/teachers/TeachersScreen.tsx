@@ -17,6 +17,7 @@ export const TeachersScreen: React.FC = () => {
     null,
   );
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     let isMounted = true;
@@ -128,9 +129,13 @@ export const TeachersScreen: React.FC = () => {
     }
   };
 
+  const filteredTeachers = teachers.filter((teacher) =>
+    teacher.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Teachers Management
@@ -139,9 +144,26 @@ export const TeachersScreen: React.FC = () => {
             Configure and manage the teachers of the educational center
           </p>
         </div>
-        <Button onClick={handleOpenCreate} variant="primary">
-          Add Teacher
-        </Button>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="w-full sm:w-64">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
+              placeholder="Search by teacher name..."
+            />
+          </div>
+          <Button
+            onClick={handleOpenCreate}
+            variant="primary"
+            className="whitespace-nowrap"
+          >
+            Add Teacher
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -160,7 +182,7 @@ export const TeachersScreen: React.FC = () => {
       ) : (
         <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
           <DataTable
-            data={teachers}
+            data={filteredTeachers}
             columns={[
               {
                 header: "Teacher Name",
