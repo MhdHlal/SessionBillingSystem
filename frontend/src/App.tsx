@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { GradesScreen } from "./features/grades/GradesScreen";
+import { TeachersScreen } from "./features/teachers/TeachersScreen";
+import { StudentsScreen } from "./features/students/StudentsScreen";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("grades");
@@ -10,27 +12,9 @@ export default function App() {
       case "grades":
         return <GradesScreen />;
       case "teachers":
-        return (
-          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800">
-              Teachers Management
-            </h3>
-            <p className="text-sm text-slate-400 mt-1">
-              This module is part of Sprint 1 and will be built next.
-            </p>
-          </div>
-        );
+        return <TeachersScreen />;
       case "students":
-        return (
-          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800">
-              Students Directory
-            </h3>
-            <p className="text-sm text-slate-400 mt-1">
-              This module will be built in Sprint 2.
-            </p>
-          </div>
-        );
+        return <StudentsScreen />;
       case "sessions":
         return (
           <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">

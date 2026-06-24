@@ -212,6 +212,7 @@ export const GradesScreen: React.FC = () => {
                 }
                 placeholder="e.g. Grade 7"
                 required
+                autoFocus
               />
               <div className="flex justify-end gap-3 pt-2">
                 <Button

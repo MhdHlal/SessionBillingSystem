@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from "react";
-import type { Teacher } from "./types";
-import { teacherService } from "./teacherService";
+import type { Student } from "./types";
+import type { Grade } from "../grades/types";
+import { studentService } from "./studentService";
+import { gradeService } from "../grades/gradeService";
 import { Button } from "../../shared/components/Button";
 import { DataTable } from "../../shared/components/DataTable";
 import { Input } from "../../shared/components/FormField";
 import { ConfirmationDialog } from "../../shared/components/ConfirmationDialog";
 
-export const TeachersScreen: React.FC = () => {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+export const StudentsScreen: React.FC = () => {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [name, setName] = useState<string>("");
-  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-  const [deletingTeacherId, setDeletingTeacherId] = useState<string | null>(
+  const [gradeId, setGradeId] = useState<string>("");
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(
     null,
   );
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -21,19 +25,21 @@ export const TeachersScreen: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchTeachers = async () => {
+    const initData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await teacherService.getAll();
+        const [studentsData, gradesData] = await Promise.all([
+          studentService.getAll(),
+          gradeService.getAll(),
+        ]);
         if (isMounted) {
-          setTeachers(data);
+          setStudents(studentsData);
+          setGrades(gradesData);
         }
       } catch (err: unknown) {
         if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to fetch teachers.",
-          );
+          setError(err instanceof Error ? err.message : "Failed to load data.");
         }
       } finally {
         if (isMounted) {
@@ -42,22 +48,22 @@ export const TeachersScreen: React.FC = () => {
       }
     };
 
-    fetchTeachers();
+    initData();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const refreshTeachers = async () => {
+  const refreshStudents = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await teacherService.getAll();
-      setTeachers(data);
+      const data = await studentService.getAll();
+      setStudents(data);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch teachers.",
+        err instanceof Error ? err.message : "Failed to fetch students.",
       );
     } finally {
       setLoading(false);
@@ -65,45 +71,52 @@ export const TeachersScreen: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
-    setEditingTeacher(null);
+    setEditingStudent(null);
     setName("");
+    setGradeId(grades.length > 0 ? grades[0].gradeId : "");
     setIsFormOpen(true);
   };
 
-  const handleOpenEdit = (teacher: Teacher) => {
-    setEditingTeacher(teacher);
-    setName(teacher.name);
+  const handleOpenEdit = (student: Student) => {
+    setEditingStudent(student);
+    setName(student.name);
+    setGradeId(student.gradeId);
     setIsFormOpen(true);
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setName("");
-    setEditingTeacher(null);
+    setGradeId("");
+    setEditingStudent(null);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !gradeId) return;
 
     try {
       setSubmitting(true);
       setError(null);
-      if (editingTeacher) {
-        await teacherService.update(editingTeacher.teacherId, {
-          teacherId: editingTeacher.teacherId,
+      if (editingStudent) {
+        await studentService.update(editingStudent.studentId, {
+          studentId: editingStudent.studentId,
           name: name.trim(),
+          gradeId,
         });
       } else {
-        await teacherService.create({ name: name.trim() });
+        await studentService.create({
+          name: name.trim(),
+          gradeId,
+        });
       }
-      await refreshTeachers();
+      await refreshStudents();
       handleCloseForm();
     } catch (err: unknown) {
       setError(
         err instanceof Error
           ? err.message
-          : "An error occurred while saving the teacher.",
+          : "An error occurred while saving the student.",
       );
     } finally {
       setSubmitting(false);
@@ -111,17 +124,17 @@ export const TeachersScreen: React.FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deletingTeacherId) return;
+    if (!deletingStudentId) return;
 
     try {
       setLoading(true);
       setError(null);
-      await teacherService.delete(deletingTeacherId);
-      await refreshTeachers();
-      setDeletingTeacherId(null);
+      await studentService.delete(deletingStudentId);
+      await refreshStudents();
+      setDeletingStudentId(null);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to delete teacher.",
+        err instanceof Error ? err.message : "Failed to delete student.",
       );
     } finally {
       setLoading(false);
@@ -133,16 +146,27 @@ export const TeachersScreen: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Teachers Management
+            Students Management
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Configure and manage the teachers of the educational center
+            Configure and manage the students and their grade assignments
           </p>
         </div>
-        <Button onClick={handleOpenCreate} variant="primary">
-          Add Teacher
+        <Button
+          onClick={handleOpenCreate}
+          variant="primary"
+          disabled={grades.length === 0}
+        >
+          Add Student
         </Button>
       </div>
+
+      {grades.length === 0 && !loading && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
+          Warning: You must create at least one Grade before you can manage or
+          add students.
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex justify-between items-center">
@@ -153,19 +177,27 @@ export const TeachersScreen: React.FC = () => {
         </div>
       )}
 
-      {loading && !teachers.length ? (
+      {loading && !students.length ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
           <DataTable
-            data={teachers}
+            data={students}
             columns={[
               {
-                header: "Teacher Name",
+                header: "Student Name",
                 accessor: (row) => row.name,
                 className: "font-medium text-gray-900",
+              },
+              {
+                header: "Assigned Grade",
+                accessor: (row) =>
+                  grades.find((g) => g.gradeId === row.gradeId)?.name ||
+                  row.gradeName ||
+                  "Unassigned",
+                className: "text-gray-600",
               },
               {
                 header: "Actions",
@@ -181,7 +213,7 @@ export const TeachersScreen: React.FC = () => {
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => setDeletingTeacherId(row.teacherId)}
+                      onClick={() => setDeletingStudentId(row.studentId)}
                     >
                       Delete
                     </Button>
@@ -199,7 +231,7 @@ export const TeachersScreen: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingTeacher ? "Edit Teacher" : "Add New Teacher"}
+                {editingStudent ? "Edit Student" : "Add New Student"}
               </h3>
               <button
                 onClick={handleCloseForm}
@@ -210,16 +242,39 @@ export const TeachersScreen: React.FC = () => {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <Input
-                label="Teacher Name"
+                label="Student Name"
                 type="text"
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setName(e.target.value)
                 }
-                placeholder="e.g. Ahmad Mahmoud"
+                placeholder="e.g. Khaled Al-Ahmad"
                 required
-                autoFocus
               />
+
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Assign Grade
+                </label>
+                <select
+                  value={gradeId}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setGradeId(e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  required
+                >
+                  <option value="" disabled>
+                    Select a Grade
+                  </option>
+                  {grades.map((grade) => (
+                    <option key={grade.gradeId} value={grade.gradeId}>
+                      {grade.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
@@ -238,13 +293,13 @@ export const TeachersScreen: React.FC = () => {
         </div>
       )}
 
-      {deletingTeacherId && (
+      {deletingStudentId && (
         <ConfirmationDialog
-          isOpen={!!deletingTeacherId}
-          title="Delete Teacher"
-          message="Are you sure you want to delete this teacher? This action cannot be undone."
+          isOpen={!!deletingStudentId}
+          title="Delete Student"
+          message="Are you sure you want to delete this student? This action cannot be undone."
           onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeletingTeacherId(null)}
+          onCancel={() => setDeletingStudentId(null)}
         />
       )}
     </div>
