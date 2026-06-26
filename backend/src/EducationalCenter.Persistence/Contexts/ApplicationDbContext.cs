@@ -12,8 +12,6 @@ namespace EducationalCenter.Persistence.Contexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // تطبيق جميع الإعدادات والتكوينات (Configurations) تلقائياً من الطبقة
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         }
     }

@@ -2,6 +2,7 @@ using EducationalCenter.Application;
 using EducationalCenter.Domain.Grades;
 using EducationalCenter.Domain.Teachers;
 using EducationalCenter.Domain.Students;
+using EducationalCenter.Domain.TeacherPricing;
 using EducationalCenter.Domain.Shared;
 using EducationalCenter.Persistence.Contexts;
 using EducationalCenter.Persistence.Repositories;
@@ -27,6 +28,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IGradeRepository, GradeRepository>();
 builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<ITeacherPricingRepository, TeacherPricingRepository>();
 
 // 5. تسجيل خدمات طبقة الـ Application وتفعيل الـ MediatR
 builder.Services.AddApplicationServices();
