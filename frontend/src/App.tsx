@@ -3,6 +3,7 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 import { GradesScreen } from "./features/grades/GradesScreen";
 import { TeachersScreen } from "./features/teachers/TeachersScreen";
 import { StudentsScreen } from "./features/students/StudentsScreen";
+import { TeacherPricingScreen } from "./features/teacher-pricing/TeacherPricingScreen";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("grades");
@@ -15,6 +16,8 @@ export default function App() {
         return <TeachersScreen />;
       case "students":
         return <StudentsScreen />;
+      case "pricing":
+        return <TeacherPricingScreen />;
       case "sessions":
         return (
           <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">

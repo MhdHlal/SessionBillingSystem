@@ -10,7 +10,7 @@ using EducationalCenter.Application.TeacherPricing.Queries;
 namespace EducationalCenter.API.Controllers
 {
   [ApiController]
-  [Route("api/teacher-pricing")]
+  [Route("api/v1/[controller]")] // Compliance with sections 19.3 and 19.4 of the API contract
   public class TeacherPricingController : ControllerBase
   {
     private readonly IMediator _mediator;

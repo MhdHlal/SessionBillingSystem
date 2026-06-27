@@ -11,6 +11,7 @@ import {
   X,
   User,
   LogOut,
+  Coins,
 } from "lucide-react";
 
 export interface DashboardLayoutProps {
@@ -30,6 +31,7 @@ export function DashboardLayout({
     { id: "grades", name: "Academic Grades", icon: GraduationCap },
     { id: "teachers", name: "Teachers Directory", icon: Users },
     { id: "students", name: "Students Directory", icon: BookOpen },
+    { id: "pricing", name: "Teacher Pricing", icon: Coins },
     { id: "sessions", name: "Session Registry", icon: CalendarDays },
     { id: "invoices", name: "Invoices & Payments", icon: Receipt },
     { id: "teacher-payments", name: "Teacher Payroll", icon: CreditCard },
@@ -47,9 +49,7 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-left" dir="ltr">
-      {/* Sidebar for Desktop */}
       <aside className="hidden lg:flex flex-col w-72 bg-slate-900 text-slate-300 border-r border-slate-800 fixed inset-y-0 left-0 z-20">
-        {/* Brand Logo */}
         <div className="h-20 flex items-center gap-3 px-6 border-b border-slate-800 bg-slate-950">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/10">
             <GraduationCap className="w-5 h-5" />
@@ -64,7 +64,6 @@ export function DashboardLayout({
           </div>
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -88,7 +87,6 @@ export function DashboardLayout({
           })}
         </nav>
 
-        {/* User Footer Account */}
         <div className="p-4 border-t border-slate-800 bg-slate-950">
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
             <div className="flex items-center gap-3">
@@ -109,15 +107,12 @@ export function DashboardLayout({
         </div>
       </aside>
 
-      {/* Mobile Sidebar (Drawer) */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          {/* Menu Drawer */}
           <aside className="fixed inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 flex flex-col z-50 animate-in slide-in-from-left duration-200">
             <div className="h-20 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-950">
               <div className="flex items-center gap-3">
@@ -162,9 +157,7 @@ export function DashboardLayout({
         </div>
       )}
 
-      {/* Main Wrapper Container */}
       <div className="flex-1 flex flex-col lg:pl-72 min-w-0">
-        {/* Top Header */}
         <header className="h-20 bg-white border-b border-slate-200/80 shadow-sm flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <button
@@ -199,7 +192,6 @@ export function DashboardLayout({
           </div>
         </header>
 
-        {/* Dashboard Content Portal */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full text-left">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
             {children}
