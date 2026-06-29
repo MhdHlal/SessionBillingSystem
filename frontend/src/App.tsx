@@ -4,6 +4,7 @@ import { GradesScreen } from "./features/grades/GradesScreen";
 import { TeachersScreen } from "./features/teachers/TeachersScreen";
 import { StudentsScreen } from "./features/students/StudentsScreen";
 import { TeacherPricingScreen } from "./features/teacher-pricing/TeacherPricingScreen";
+import { SessionsScreen } from "./features/sessions/SessionsScreen";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("grades");
@@ -19,16 +20,7 @@ export default function App() {
       case "pricing":
         return <TeacherPricingScreen />;
       case "sessions":
-        return (
-          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
-            <h3 className="text-lg font-bold text-slate-800">
-              Session Attendance
-            </h3>
-            <p className="text-sm text-slate-400 mt-1">
-              This module will be built in Sprint 2.
-            </p>
-          </div>
-        );
+        return <SessionsScreen />;
       case "invoices":
         return (
           <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center shadow-sm">
