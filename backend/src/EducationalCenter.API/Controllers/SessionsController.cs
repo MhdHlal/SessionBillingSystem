@@ -83,5 +83,24 @@ namespace EducationalCenter.API.Controllers
         return BadRequest(ApiResponse<bool>.ToError("BAD_REQUEST", ex.Message));
       }
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSessionCommand command)
+    {
+      if (id != command.Id)
+      {
+        return BadRequest(ApiResponse<bool>.ToError("BAD_REQUEST", "Id mismatch."));
+      }
+
+      try
+      {
+        await _mediator.Send(command);
+        return Ok(ApiResponse<bool>.ToSuccess(true));
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(ApiResponse<bool>.ToError("BAD_REQUEST", ex.Message));
+      }
+    }
   }
 }

@@ -17,6 +17,19 @@ export const sessionService = {
     return response.data;
   },
 
+  update: async (id: string, dto: CreateSessionDto): Promise<boolean> => {
+    const response = await apiClient.put<boolean>(`/sessions/${id}`, {
+      id,
+      sessionDate: dto.sessionDate,
+      attendances: dto.attendances.map((a) => ({
+        studentId: a.studentId,
+        isPresent: a.isPresent,
+        notes: a.notes || null,
+      })),
+    });
+    return response.data;
+  },
+
   complete: async (id: string): Promise<boolean> => {
     const response = await apiClient.put<boolean>(
       `/sessions/${id}/complete`,

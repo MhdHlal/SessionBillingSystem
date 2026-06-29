@@ -6,7 +6,6 @@ using EducationalCenter.Domain.Teachers;
 
 namespace EducationalCenter.Domain.Sessions
 {
-  // يمثل هذا الكيان حالة الجلسة التعليمية (Aggregate Root)
   public class Session
   {
     private readonly List<SessionAttendance> _attendances = new();
@@ -15,7 +14,7 @@ namespace EducationalCenter.Domain.Sessions
     public Guid TeacherId { get; private set; }
     public Guid GradeId { get; private set; }
     public DateTime SessionDate { get; private set; }
-    public decimal UnitPrice { get; private set; } // السعر الفردي المعتمد للحصة وقت إنشائها
+    public decimal UnitPrice { get; private set; }
     public SessionStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
@@ -25,7 +24,6 @@ namespace EducationalCenter.Domain.Sessions
     public Grade Grade { get; private set; } = null!;
     public IReadOnlyCollection<SessionAttendance> Attendances => _attendances.AsReadOnly();
 
-    // مشيد فارغ مخصص لعمليات الـ ORM
     private Session() { }
 
     private Session(Guid id, Guid teacherId, Guid gradeId, DateTime sessionDate, decimal unitPrice)
@@ -47,17 +45,15 @@ namespace EducationalCenter.Domain.Sessions
       GradeId = gradeId;
       SessionDate = sessionDate;
       UnitPrice = unitPrice;
-      Status = SessionStatus.Scheduled; // الحالة الافتراضية للجلسة عند الإنشاء
+      Status = SessionStatus.Scheduled;
       CreatedAt = DateTime.UtcNow;
     }
 
-    // دالة المصنع لإنشاء جلسة جديدة بشكل آمن
     public static Session Create(Guid teacherId, Guid gradeId, DateTime sessionDate, decimal unitPrice)
     {
       return new Session(Guid.NewGuid(), teacherId, gradeId, sessionDate, unitPrice);
     }
 
-    // إضافة سجل حضور لطالب محدد داخل هذه الجلسة
     public void AddAttendance(Guid studentId, bool isPresent, string? notes = null)
     {
       if (Status != SessionStatus.Scheduled)
@@ -71,7 +67,6 @@ namespace EducationalCenter.Domain.Sessions
       UpdatedAt = DateTime.UtcNow;
     }
 
-    // تحديث كشف الحضور بالكامل لجسم الجلسة
     public void UpdateAttendanceList(IEnumerable<(Guid StudentId, bool IsPresent, string? Notes)> attendanceData)
     {
       if (Status != SessionStatus.Scheduled)
@@ -87,7 +82,15 @@ namespace EducationalCenter.Domain.Sessions
       UpdatedAt = DateTime.UtcNow;
     }
 
-    // إنهاء الجلسة وتأكيدها محاسبياً وتحويلها لحالة مكتملة
+    public void UpdateSessionDate(DateTime newDate)
+    {
+      if (Status != SessionStatus.Scheduled)
+        throw new InvalidOperationException("The session date can only be modified for scheduled sessions.");
+
+      SessionDate = newDate;
+      UpdatedAt = DateTime.UtcNow;
+    }
+
     public void Complete()
     {
       if (Status == SessionStatus.Cancelled)
@@ -100,7 +103,6 @@ namespace EducationalCenter.Domain.Sessions
       UpdatedAt = DateTime.UtcNow;
     }
 
-    // إلغاء الجلسة بالكامل وإيقاف فواتيرها
     public void Cancel()
     {
       if (Status == SessionStatus.Completed)
@@ -111,11 +113,10 @@ namespace EducationalCenter.Domain.Sessions
     }
   }
 
-  // الحالات التشغيلية المعتمدة للجلسة
   public enum SessionStatus
   {
-    Scheduled = 1, // مجدولة وتحت التحضير
-    Completed = 2, // اكتملت وتمت فوترتها بنجاح
-    Cancelled = 3  // ملغاة
+    Scheduled = 1,
+    Completed = 2,
+    Cancelled = 3
   }
 }

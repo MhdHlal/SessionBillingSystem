@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Check, Ban } from "lucide-react";
+import { Eye, Check, Ban, Pencil } from "lucide-react";
 import type { Session, SessionAttendance } from "./types";
 import type { Teacher } from "../teachers/types";
 import type { Grade } from "../grades/types";
@@ -36,6 +36,7 @@ export const SessionsScreen: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const [teacherId, setTeacherId] = useState<string>("");
@@ -153,6 +154,7 @@ export const SessionsScreen: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
+    setEditingSessionId(null);
     setTeacherId(teachers.length > 0 ? teachers[0].teacherId : "");
     setSessionDate(new Date().toISOString().substring(0, 16));
     setIsFormOpen(true);
@@ -161,8 +163,35 @@ export const SessionsScreen: React.FC = () => {
     }
   };
 
+  const handleOpenEdit = (session: Session) => {
+    setEditingSessionId(session.id);
+    setTeacherId(session.teacherId);
+    setGradeId(session.gradeId);
+
+    // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+    const d = new Date(session.sessionDate);
+    const pad = (num: number) => String(num).padStart(2, "0");
+    const localDateTime = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setSessionDate(localDateTime);
+
+    // Map existing attendance records
+    const mappedAttendance = session.attendances.map((a) => ({
+      id: a.id,
+      studentId: a.studentId,
+      studentName:
+        a.studentName ||
+        students.find((s) => s.studentId === a.studentId)?.name ||
+        "Unknown Student",
+      isPresent: a.isPresent,
+      notes: a.notes || "",
+    }));
+    setAttendanceForm(mappedAttendance);
+    setIsFormOpen(true);
+  };
+
   const handleCloseForm = () => {
     setIsFormOpen(false);
+    setEditingSessionId(null);
     setTeacherId("");
     setGradeId("");
     setSessionDate("");
@@ -185,13 +214,19 @@ export const SessionsScreen: React.FC = () => {
         gradeId,
         sessionDate: new Date(sessionDate).toISOString(),
         attendances: attendanceForm.map((a) => ({
+          id: a.id,
           studentId: a.studentId,
           isPresent: a.isPresent,
           notes: a.notes || null,
         })),
       };
 
-      await sessionService.create(payload);
+      if (editingSessionId) {
+        await sessionService.update(editingSessionId, payload);
+      } else {
+        await sessionService.create(payload);
+      }
+
       await refreshSessions();
       handleCloseForm();
     } catch (err: unknown) {
@@ -399,6 +434,13 @@ export const SessionsScreen: React.FC = () => {
                     {row.status === "Scheduled" && (
                       <>
                         <button
+                          onClick={() => handleOpenEdit(row)}
+                          className="flex items-center justify-center w-8 h-8 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                          title="Edit Session"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
                           disabled={row.attendances.length === 0}
                           onClick={() => setConfirmCompleteId(row.id)}
                           className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -417,7 +459,7 @@ export const SessionsScreen: React.FC = () => {
                     )}
                   </div>
                 ),
-                className: "text-right min-w-[120px]",
+                className: "text-right min-w-[150px]",
               },
             ]}
           />
@@ -429,7 +471,9 @@ export const SessionsScreen: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">
-                Record New Session
+                {editingSessionId
+                  ? "Edit Scheduled Session"
+                  : "Record New Session"}
               </h3>
               <button
                 onClick={handleCloseForm}
@@ -466,6 +510,7 @@ export const SessionsScreen: React.FC = () => {
                     value={gradeId}
                     onChange={(e) => handleGradeChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm"
+                    disabled={!!editingSessionId} // Grade shouldn't change if editing to prevent mismatch, or can be left enabled if backend supports
                     required
                   >
                     {grades.map((g) => (
@@ -558,7 +603,11 @@ export const SessionsScreen: React.FC = () => {
                   variant="primary"
                   disabled={submitting || attendanceForm.length === 0}
                 >
-                  {submitting ? "Saving..." : "Record Session"}
+                  {submitting
+                    ? "Saving..."
+                    : editingSessionId
+                      ? "Update Session"
+                      : "Record Session"}
                 </Button>
               </div>
             </form>
